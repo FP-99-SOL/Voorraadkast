@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title> Mijn keuken </title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script defer src="data/seed.js"></script>
+  <script defer src="js/db.js"></script>
+  <script defer src="js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Naar inhoud</a>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <h1 class="brand"><span class="brand-icon" aria-hidden="true">&#127858;</span> Mijn keuken </h1>
+      <nav class="tabs" aria-label="Hoofdnavigatie">
+        <button type="button" class="tab" data-tab="voorraad" aria-controls="view-voorraad">Mijn voorraad</button>
+        <button type="button" class="tab" data-tab="maken" aria-controls="view-maken">Wat kan ik maken?</button>
+        <button type="button" class="tab" data-tab="recepten" aria-controls="view-recepten">Recepten</button>
+      </nav>
+    </div>
+  </header>
+
+  <div id="error-banner" class="error-banner" role="alert" hidden></div>
+
+  <main id="main" class="container">
+    <p id="loading" class="loading">Laden&hellip;</p>
+
+    <!-- Mijn voorraad -->
+    <section id="view-voorraad" class="view" hidden aria-labelledby="h-voorraad">
+      <div class="view-head">
+        <h2 id="h-voorraad">Mijn voorraad</h2>
+        <p class="counter" id="pantry-counter" aria-live="polite"></p>
+      </div>
+
+      <div class="toolbar">
+        <div class="field grow">
+          <label for="pantry-search">Zoek ingrediënt</label>
+          <input type="search" id="pantry-search" placeholder="Bijv. tomaat, kaas&hellip;" autocomplete="off">
+        </div>
+        <div class="toolbar-actions">
+          <button type="button" class="btn btn-ghost" id="expand-all">Alles uitklappen</button>
+          <button type="button" class="btn btn-ghost" id="collapse-all">Alles inklappen</button>
+          <button type="button" class="btn btn-danger-ghost" id="clear-pantry">Alles wissen</button>
+        </div>
+      </div>
+
+      <p id="staples-note" class="note"></p>
+
+      <div id="pantry-groups"></div>
+
+      <form id="add-ingredient-form" class="card add-ingredient" novalidate>
+        <h3>Eigen ingrediënt toevoegen</h3>
+        <div class="form-row">
+          <div class="field grow">
+            <label for="new-ing-name">Naam</label>
+            <input type="text" id="new-ing-name" required maxlength="60" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="new-ing-cat">Categorie</label>
+            <select id="new-ing-cat"></select>
+          </div>
+          <div class="field field-btn">
+            <button type="submit" class="btn btn-primary">Toevoegen</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Wat kan ik maken? -->
+    <section id="view-maken" class="view" hidden aria-labelledby="h-maken">
+      <div class="view-head">
+        <h2 id="h-maken">Wat kan ik maken?</h2>
+        <p class="counter" id="make-counter" aria-live="polite"></p>
+      </div>
+      <div class="toolbar filters">
+        <div class="field grow">
+          <label for="make-search">Zoeken</label>
+          <input type="search" id="make-search" placeholder="Recept of keuken&hellip;" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="make-cat">Categorie</label>
+          <select id="make-cat"></select>
+        </div>
+        <div class="field">
+          <label for="make-max">Max. ontbrekend</label>
+          <select id="make-max">
+            <option value="any">Maakt niet uit</option>
+            <option value="0">0 (alles in huis)</option>
+            <option value="1">Hoogstens 1</option>
+            <option value="2">Hoogstens 2</option>
+            <option value="3">Hoogstens 3</option>
+          </select>
+        </div>
+      </div>
+      <div id="make-list" class="card-grid"></div>
+    </section>
+
+    <!-- Recepten -->
+    <section id="view-recepten" class="view" hidden aria-labelledby="h-recepten">
+      <div class="view-head">
+        <h2 id="h-recepten">Recepten</h2>
+        <button type="button" class="btn btn-primary" id="new-recipe">+ Nieuw recept</button>
+      </div>
+      <div class="toolbar filters">
+        <div class="field grow">
+          <label for="rec-search">Zoeken</label>
+          <input type="search" id="rec-search" placeholder="Naam, keuken of ingrediënt&hellip;" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="rec-cat">Categorie</label>
+          <select id="rec-cat"></select>
+        </div>
+      </div>
+      <p class="counter" id="rec-counter" aria-live="polite"></p>
+      <div id="rec-list" class="card-grid"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container footer-inner">
+      <h2 class="footer-title">Gegevens</h2>
+      <div class="footer-actions">
+        <button type="button" class="btn btn-ghost" id="export-btn">Exporteren</button>
+        <label class="btn btn-ghost file-btn" for="import-file">Importeren
+          <input type="file" id="import-file" accept="application/json,.json" class="visually-hidden-input">
+        </label>
+        <button type="button" class="btn btn-danger-ghost" id="reset-btn">Alles resetten</button>
+      </div>
+      <p class="footer-note">Alles wordt lokaal in je browser opgeslagen.</p>
+    </div>
+  </footer>
+
+  <!-- Detail dialog -->
+  <dialog id="detail-dialog" class="dialog" aria-labelledby="detail-title">
+    <div class="dialog-inner">
+      <div class="dialog-head">
+        <h2 id="detail-title"></h2>
+        <button type="button" class="icon-btn" data-close aria-label="Sluiten">&times;</button>
+      </div>
+      <div id="detail-body" class="dialog-body"></div>
+    </div>
+  </dialog>
+
+  <!-- Recipe form dialog -->
+  <dialog id="form-dialog" class="dialog dialog-wide" aria-labelledby="form-title">
+    <form id="recipe-form" class="dialog-inner" novalidate>
+      <div class="dialog-head">
+        <h2 id="form-title">Nieuw recept</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Sluiten">&times;</button>
+      </div>
+      <div class="dialog-body">
+        <div id="form-errors" class="form-errors" role="alert" hidden></div>
+        <div class="form-grid">
+          <div class="field span-2">
+            <label for="rf-name">Naam *</label>
+            <input type="text" id="rf-name" required maxlength="100" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="rf-cuisine">Keuken</label>
+            <input type="text" id="rf-cuisine" maxlength="40" placeholder="Bijv. Italiaans" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="rf-category">Categorie *</label>
+            <select id="rf-category" required></select>
+          </div>
+          <div class="field">
+            <label for="rf-time">Bereidingstijd (min) *</label>
+            <input type="number" id="rf-time" min="1" max="1440" step="1" inputmode="numeric" required>
+          </div>
+          <div class="field">
+            <label for="rf-servings">Personen *</label>
+            <input type="number" id="rf-servings" min="1" max="100" step="1" inputmode="numeric" required>
+          </div>
+        </div>
+
+        <fieldset class="ing-fieldset">
+          <legend>Ingrediënten *</legend>
+          <div id="rf-ingredients" class="ing-rows"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="rf-add-ing">+ Ingrediënt toevoegen</button>
+        </fieldset>
+        <datalist id="known-ingredients"></datalist>
+
+        <div class="field">
+          <label for="rf-steps">Bereiding * <span class="hint">(één stap per regel)</span></label>
+          <textarea id="rf-steps" rows="6" required></textarea>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button type="button" class="btn btn-ghost" data-close>Annuleren</button>
+        <button type="submit" class="btn btn-primary">Opslaan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast-region" class="toast-region" role="status" aria-live="polite"></div>
+</body>
+</html>
